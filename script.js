@@ -4,11 +4,16 @@ const form = document.querySelector('form');
 const input = document.querySelector('#txtTaskName');
 const deleteAllBtn = document.querySelector('#btnDeleteAll');
 const taskList = document.querySelector('#task-list');
-const items = ['item 1','item 2','item 3','item 4'];
+let items;
 
-//load items
+
+//dizi elemanlarının sayfaya yüklenmesi
 loadItems();
+// olayların sayfaya yüklenmesi
 eventListenners();
+
+
+
 
 
 function eventListenners(){        //formda submit olayı olduğunda , addNewItem fonksiyonu çağırılır.
@@ -21,13 +26,42 @@ function eventListenners(){        //formda submit olayı olduğunda , addNewIte
         // delete All tüm elamanları silmek
     deleteAllBtn.addEventListener('click', deleteItemAll);
 }
-
+    
 function loadItems() {
+    //localstorage üzerinden elemanları almak
+    items = getItemsFromLS();
+
     items.forEach(function(item){
         createItem(item);
     })
 }
+    //LS'den elemanlara ulaşmak
+function getItemsFromLS(){
+    if (localStorage.getItem('items') === null){
+        items = [];
+    }else {
+        items = JSON.parse(localStorage.getItem('items'));
+    }
+    return items;
+}
+    //LS'in içerisine bilgi eklemek
+function setItemToFromLS(text){
+    items = getItemsFromLS();
+    items.push(text);
+    localStorage.setItem('items',JSON.stringify(items));
+}
+    //LS'in içerisinden eleman silmek
+function deleteItemFromLS(text){
+    items = getItemsFromLS();
+    items.forEach(function(item,index){
+        if (item === text){
+            items.splice(index,1);
+        }
+    });
+    localStorage.setItem('items',JSON.stringify(items))
+}
 
+    //oluşturulan dizi üzerindeki elemanları sayfaya eklemek
 function createItem(text){
      // li elamnını oluşturma
      const li = document.createElement('li');
@@ -57,6 +91,9 @@ function addNewItem(e) {
 
     //eleman oluşturma
     createItem(input.value);
+
+    //Localstorage e elemanı kayıt etmek
+    setItemToFromLS(input.value);
    
     //inputu temizlemek
     input.value = '';
@@ -70,7 +107,9 @@ function deleteItem(e) {
 
         if (e.target.className==='fas fa-times') {
             if(confirm(`Task'ı silmek istediğinizden emin misiniz?`)){
-            e.target.parentElement.parentElement.remove();
+                e.target.parentElement.parentElement.remove();
+                //LS'den elemanı silmek
+                deleteItemFromLS(e.target.parentElement.parentElement.textContent);
             }
         }
     e.preventDefault();
@@ -79,16 +118,16 @@ function deleteItem(e) {
     //listeden tüm elemanları silmek
 function deleteItemAll(e) {
 
-    // taskList.childNodes.forEach(function (item){
-    //     if (item.nodeType === 1){   // nodetype element ise bu işlemi yapar
-    //         item.remove();
-    //     }
-    // })
     if (taskList.innerHTML==''){
-        confirm('Task bulunamadı.');
+        confirm('Liste zaten boş');
     }else if (confirm('Tüm taskları silmek istediğinizden emin misiniz?')) {
-        taskList.innerHTML ='';
-    }
-    
+        
+        while(taskList.firstChild){ //listemizde eleman olduğu sürece dönecek.
+            taskList.removeChild(taskList.firstChild);
+        }
+        //tüm elemanları LS'den silmek
+        localStorage.clear();
+    }       
+
     e.preventDefault();
 }
